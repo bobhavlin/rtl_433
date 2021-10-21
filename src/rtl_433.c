@@ -143,7 +143,7 @@ static void usage(int exit_code)
             "  [-C native | si | customary] Convert units in decoded output.\n"
             "  [-n <value>] Specify number of samples to take (each sample is an I/Q pair)\n"
             "  [-T <seconds>] Specify number of seconds to run, also 12:34 or 1h23m45s\n"
-            "  [-E hop | quit] Hop/Quit after outputting successful event(s)\n"
+            "  [-E hop | quit | hop2] Hop/Quit after outputting successful event(s) (hop2=only hop on success for 2nd freq)\n"
             "  [-h] Output this usage help and exit\n"
             "       Use -d, -g, -R, -X, -F, -M, -r, -w, or -W without argument for more help\n\n",
             DEFAULT_FREQUENCY, DEFAULT_HOP_TIME, DEFAULT_SAMPLE_RATE);
@@ -648,6 +648,9 @@ static void sdr_callback(unsigned char *iq_buf, uint32_t len, void *ctx)
         alarm(0); // cancel the watchdog timer
         if (cfg->after_successful_events_flag == 1) {
             cfg->exit_async = 1;
+        }
+        else if ((cfg->after_successful_events_flag == 3) && (cfg->frequency_index == 0)) {   // do not hop on success if first frequency_index
+            cfg->hop_now = 0;
         }
         else {
             cfg->hop_now = 1;
@@ -1184,6 +1187,9 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
         }
         else if (arg && !strcmp(arg, "quit")) {
             cfg->after_successful_events_flag = 1;
+        }
+        else if (arg && !strcmp(arg, "hop2")) {
+            cfg->after_successful_events_flag = 3;
         }
         else {
             cfg->after_successful_events_flag = atobv(arg, 1);
